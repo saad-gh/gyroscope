@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Case B — Spherical Trace of Unprimed +z Pole</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: rgba(15, 23, 42, 0.88);
+      --border: rgba(148, 163, 184, 0.22);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+    }
+    #canvas-wrap {
+      flex: 1;
+      position: relative;
+      height: 100vh;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    canvas:active { cursor: grabbing; }
+    #sidebar {
+      width: 340px;
+      background: var(--panel);
+      border-left: 1px solid var(--border);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      backdrop-filter: blur(10px);
+    }
+    h1 {
+      font-size: 1.05rem;
+      line-height: 1.35;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .subtitle {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .card {
+      background: rgba(30, 41, 59, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.84rem;
+    }
+    .btn {
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn:hover { background: #1d4ed8; }
+    .btn.secondary {
+      background: #334155;
+    }
+    .btn.secondary:hover { background: #475569; }
+    input[type="range"] {
+      width: 100%;
+      accent-color: #3b82f6;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.81rem;
+      color: #e2e8f0;
+    }
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .math-box {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      line-height: 1.45;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    .stat {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #38bdf8;
+      font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-wrap">
+    <canvas id="view"></canvas>
+  </div>
+  <aside id="sidebar">
+    <div>
+      <h1>Case B: Gyroscopic Spherical Trace</h1>
+      <p class="subtitle">Drag on canvas to orbit 3D view, scroll to zoom.</p>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <button id="playBtn" class="btn">Pause</button>
+        <button id="resetBtn" class="btn secondary">Reset t=0</button>
+      </div>
+      <div>
+        <div class="row">
+          <span>Normalized Time (t / T)</span>
+          <span id="timeLabel" class="stat">0.000</span>
+        </div>
+        <input id="timeSlider" type="range" min="0" max="1" step="0.001" value="0" />
+      </div>
+      <div>
+        <div class="row">
+          <span>Speed</span>
+          <span id="speedLabel" class="stat">1.0x</span>
+        </div>
+        <input id="speedSlider" type="range" min="0.1" max="3.0" step="0.1" value="1.0" />
+      </div>
+      <div>
+        <div class="row">
+          <span>Inter-plane Angle α</span>
+          <span id="alphaLabel" class="stat">45°</span>
+        </div>
+        <input id="alphaSlider" type="range" min="5" max="85" step="1" value="45" />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row"><strong>Live Coordinates P(t)/R</strong></div>
+      <div class="row"><span>X / R</span><span id="xVal" class="stat">0.000</span></div>
+      <div class="row"><span>Y / R</span><span id="yVal" class="stat">0.000</span></div>
+      <div class="row"><span>Z / R</span><span id="zVal" class="stat">1.000</span></div>
+      <div class="row"><span>|P| / R</span><span id="normVal" class="stat">1.000</span></div>
+      <div class="row"><span>∠(x̂, x̂')</span><span id="angleVal" class="stat">45.0°</span></div>
+    </div>
+
+    <div class="card">
+      <div class="row"><strong>Legend & Toggles</strong></div>
+      <label class="legend-item">
+        <input type="checkbox" id="showTrace" checked />
+        <span class="swatch" style="background:#f97316"></span>
+        <span>+z Pole Trace P(t) = R ẑ(t)</span>
+      </label>
+      <label class="legend-item">
+        <input type="checkbox" id="showUnprimed" checked />
+        <span class="swatch" style="background:#38bdf8"></span>
+        <span>Unprimed Circle (yz) & Normal x̂</span>
+      </label>
+      <label class="legend-item">
+        <input type="checkbox" id="showPrimed" checked />
+        <span class="swatch" style="background:#4ade80"></span>
+        <span>Primed Circle (y'z') & Normal x̂'</span>
+      </label>
+      <label class="legend-item">
+        <input type="checkbox" id="showZ0" checked />
+        <span class="swatch" style="background:#c084fc"></span>
+        <span>z = 0 Dynamic Plane (xy)</span>
+      </label>
+      <label class="legend-item">
+        <input type="checkbox" id="showIntersect" checked />
+        <span class="swatch" style="background:#facc15"></span>
+        <span>Intersection Vector ±R ŷ(t)</span>
+      </label>
+    </div>
+
+    <div class="math-box">
+      <strong>Case B Equations:</strong><br/>
+      R(t) = R_y(-α) R_x(ωt) R_y(ωt/4 + α)<br/>
+      u = ωt/4 + α<br/>
+      X = R [cosα sin(u) - sinα cos(u) cos(ωt)]<br/>
+      Y = -R sin(ωt) cos(u)<br/>
+      Z = R [sinα sin(u) + cosα cos(u) cos(ωt)]
+    </div>
+  </aside>
+
+  <script>
+    const canvas = document.getElementById('view');
+    const ctx = canvas.getContext('2d');
+
+    let width = 800, height = 600;
+    function resize() {
+      width = canvas.parentElement.clientWidth;
+      height = canvas.parentElement.clientHeight;
+      canvas.width = width * window.devicePixelRatio;
+      canvas.height = height * window.devicePixelRatio;
+      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Camera state (Z-up right-handed coordinate system)
+    let camAzim = 0.65;
+    let camElev = 0.42;
+    let camDist = 3.2;
+    let dragging = false;
+    let lastX = 0, lastY = 0;
+
+    canvas.addEventListener('mousedown', e => {
+      dragging = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+    });
+    window.addEventListener('mouseup', () => dragging = false);
+    window.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      camAzim -= dx * 0.007;
+      camElev = Math.max(-1.45, Math.min(1.45, camElev + dy * 0.007));
+    });
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      camDist = Math.max(1.8, Math.min(6.0, camDist + e.deltaY * 0.0015));
+    }, { passive: false });
+
+    function rotX(theta) {
+      const c = Math.cos(theta), s = Math.sin(theta);
+      return [
+        [1, 0, 0],
+        [0, c, -s],
+        [0, s, c]
+      ];
+    }
+    function rotY(theta) {
+      const c = Math.cos(theta), s = Math.sin(theta);
+      return [
+        [c, 0, s],
+        [0, 1, 0],
+        [-s, 0, c]
+      ];
+    }
+    function matMul(A, B) {
+      const C = [[0,0,0],[0,0,0],[0,0,0]];
+      for (let i=0; i<3; i++)
+        for (let j=0; j<3; j++)
+          for (let k=0; k<3; k++)
+            C[i][j] += A[i][k] * B[k][j];
+      return C;
+    }
+    function caseBMatrix(t, omega, alpha) {
+      return matMul(rotY(-alpha), matMul(rotX(omega * t), rotY(0.25 * omega * t + alpha)));
+    }
+    function colVec(M, j) {
+      return [M[0][j], M[1][j], M[2][j]];
+    }
+    function project(pt) {
+      const ca = Math.cos(camAzim), sa = Math.sin(camAzim);
+      const ce = Math.cos(camElev), se = Math.sin(camElev);
+      // Forward vector from origin to camera
+      const x1 = -sa * pt[0] + ca * pt[1];
+      const y1 = -ca * se * pt[0] - sa * se * pt[1] + ce * pt[2];
+      const z1 = ca * ce * pt[0] + sa * ce * pt[1] + se * pt[2];
+      const depth = camDist - z1;
+      const scale = Math.min(width, height) * 0.9 / Math.max(0.2, depth);
+      return [width * 0.5 + x1 * scale, height * 0.5 - y1 * scale, depth];
+    }
+
+    function drawPolyline3D(pts, color, lineWidth = 2, dash = []) {
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.setLineDash(dash);
+      ctx.beginPath();
+      for (let i = 0; i < pts.length; i++) {
+        const [sx, sy] = project(pts[i]);
+        if (i === 0) ctx.moveTo(sx, sy);
+        else ctx.lineTo(sx, sy);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPoint3D(pt, color, radius = 5) {
+      const [sx, sy] = project(pt);
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // UI Elements
+    const playBtn = document.getElementById('playBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const timeSlider = document.getElementById('timeSlider');
+    const timeLabel = document.getElementById('timeLabel');
+    const speedSlider = document.getElementById('speedSlider');
+    const speedLabel = document.getElementById('speedLabel');
+    const alphaSlider = document.getElementById('alphaSlider');
+    const alphaLabel = document.getElementById('alphaLabel');
+
+    let playing = true;
+    let normTime = 0.0; // in [0, 1] where 1 = 8*pi/omega
+    const omega = 1.0;
+    const T = 8 * Math.PI / omega;
+
+    playBtn.addEventListener('click', () => {
+      playing = !playing;
+      playBtn.textContent = playing ? 'Pause' : 'Play';
+    });
+    resetBtn.addEventListener('click', () => {
+      normTime = 0;
+      timeSlider.value = 0;
+    });
+    timeSlider.addEventListener('input', () => {
+      normTime = parseFloat(timeSlider.value);
+    });
+    speedSlider.addEventListener('input', () => {
+      speedLabel.textContent = parseFloat(speedSlider.value).toFixed(1) + 'x';
+    });
+    alphaSlider.addEventListener('input', () => {
+      alphaLabel.textContent = alphaSlider.value + '°';
+    });
+
+    function generateGreatCircle(uHat, vHat, n = 120) {
+      const pts = [];
+      for (let i = 0; i <= n; i++) {
+        const phi = (2 * Math.PI * i) / n;
+        const c = Math.cos(phi), s = Math.sin(phi);
+        pts.push([
+          c * uHat[0] + s * vHat[0],
+          c * uHat[1] + s * vHat[1],
+          c * uHat[2] + s * vHat[2]
+        ]);
+      }
+      return pts;
+    }
+
+    let lastTS = performance.now();
+    function render(now) {
+      const dt = (now - lastTS) / 1000;
+      lastTS = now;
+
+      const speed = parseFloat(speedSlider.value);
+      const alpha = (parseFloat(alphaSlider.value) * Math.PI) / 180;
+
+      if (playing) {
+        normTime = (normTime + dt * 0.06 * speed) % 1.0;
+        timeSlider.value = normTime.toFixed(4);
+      }
+      timeLabel.textContent = normTime.toFixed(3);
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw wireframe sphere
+      for (let lat = -60; lat <= 60; lat += 30) {
+        const rad = (lat * Math.PI) / 180;
+        const r = Math.cos(rad), z = Math.sin(rad);
+        const ring = [];
+        for (let i = 0; i <= 72; i++) {
+          const th = (2 * Math.PI * i) / 72;
+          ring.push([r * Math.cos(th), r * Math.sin(th), z]);
+        }
+        drawPolyline3D(ring, 'rgba(148, 163, 184, 0.14)', 1);
+      }
+      for (let lon = 0; lon < 180; lon += 30) {
+        const rad = (lon * Math.PI) / 180;
+        const u = [Math.cos(rad), Math.sin(rad), 0];
+        const v = [0, 0, 1];
+        drawPolyline3D(generateGreatCircle(u, v, 72), 'rgba(148, 163, 184, 0.14)', 1);
+      }
+
+      // Inertial axes
+      drawPolyline3D([[-1.2,0,0],[1.2,0,0]], 'rgba(148,163,184,0.35)', 1, [4,4]);
+      drawPolyline3D([[0,-1.2,0],[0,1.2,0]], 'rgba(148,163,184,0.35)', 1, [4,4]);
+      drawPolyline3D([[0,0,-1.2],[0,0,1.2]], 'rgba(148,163,184,0.35)', 1, [4,4]);
+
+      const t = normTime * T;
+      const Rmat = caseBMatrix(t, omega, alpha);
+      const xHat = colVec(Rmat, 0);
+      const yHat = colVec(Rmat, 1);
+      const zHat = colVec(Rmat, 2);
+
+      const Rprime = matMul(Rmat, rotY(-alpha));
+      const xpHat = colVec(Rprime, 0);
+      const ypHat = colVec(Rprime, 1);
+      const zpHat = colVec(Rprime, 2);
+
+      // Full period faint trace + active trace
+      if (document.getElementById('showTrace').checked) {
+        const fullPts = [];
+        const N = 600;
+        for (let i = 0; i <= N; i++) {
+          const ti = (i / N) * T;
+          const M = caseBMatrix(ti, omega, alpha);
+          fullPts.push(colVec(M, 2));
+        }
+        drawPolyline3D(fullPts, 'rgba(249, 115, 22, 0.24)', 1.5, [3, 3]);
+
+        const histPts = [];
+        const steps = Math.max(2, Math.floor(normTime * N));
+        for (let i = 0; i <= steps; i++) {
+          const ti = (i / N) * T;
+          const M = caseBMatrix(ti, omega, alpha);
+          histPts.push(colVec(M, 2));
+        }
+        drawPolyline3D(histPts, '#f97316', 3.0);
+      }
+
+      if (document.getElementById('showZ0').checked) {
+        drawPolyline3D(generateGreatCircle(xHat, yHat, 120), 'rgba(192, 132, 252, 0.75)', 1.5, [4, 4]);
+      }
+
+      if (document.getElementById('showPrimed').checked) {
+        drawPolyline3D(generateGreatCircle(ypHat, zpHat, 120), '#4ade80', 2.2);
+        drawPolyline3D([[0,0,0], xpHat.map(v => 0.85 * v)], '#4ade80', 2.0);
+        drawPoint3D(xpHat.map(v => 0.85 * v), '#4ade80', 4);
+      }
+
+      if (document.getElementById('showUnprimed').checked) {
+        drawPolyline3D(generateGreatCircle(yHat, zHat, 120), '#38bdf8', 2.4);
+        drawPolyline3D([[0,0,0], xHat.map(v => 0.85 * v)], '#38bdf8', 2.0);
+        drawPoint3D(xHat.map(v => 0.85 * v), '#38bdf8', 4);
+      }
+
+      if (document.getElementById('showIntersect').checked) {
+        const p1 = yHat.map(v => -v);
+        const p2 = yHat.map(v => v);
+        drawPolyline3D([p1, p2], '#facc15', 2.6);
+        drawPoint3D(p1, '#facc15', 5);
+        drawPoint3D(p2, '#facc15', 5);
+      }
+
+      // Draw +z pole vector & point
+      drawPolyline3D([[0,0,0], zHat], '#ef4444', 2.4);
+      drawPoint3D(zHat, '#ef4444', 7);
+
+      // Update live stats
+      document.getElementById('xVal').textContent = zHat[0].toFixed(3);
+      document.getElementById('yVal').textContent = zHat[1].toFixed(3);
+      document.getElementById('zVal').textContent = zHat[2].toFixed(3);
+      const norm = Math.hypot(zHat[0], zHat[1], zHat[2]);
+      document.getElementById('normVal').textContent = norm.toFixed(3);
+      const dot = xHat[0]*xpHat[0] + xHat[1]*xpHat[1] + xHat[2]*xpHat[2];
+      const ang = (Math.acos(Math.max(-1, Math.min(1, dot))) * 180) / Math.PI;
+      document.getElementById('angleVal').textContent = ang.toFixed(1) + '°';
+
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
