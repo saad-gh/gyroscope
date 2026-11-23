@@ -1,0 +1,4 @@
+change in inertia produces torque about axis other then main axis based on intesection of the tangents before and after the change in inertia. 
+
+friction creates an effect as if that is  
+allowing less change to flow and resisting greater to not flow how does that feedback into main axis

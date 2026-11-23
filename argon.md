@@ -2,8 +2,8 @@
 Let $\{\hat{E}_x, \hat{E}_y, \hat{E}_z\}$ be the fixed inertial (lab) basis, $\{\hat{x}(t), \hat{y}(t), \hat{z}(t)\}$ be the rotating unprimed orthonormal basis, and $\{\hat{x}'(t), \hat{y}'(t), \hat{z}'(t)\}$ be the rotating primed orthonormal basis, all sharing the origin $O$.
 1. Unprimed circle (lies in the unprimed $yz$-plane, normal $\hat{x}(t)$):
 $$\mathbf{r}(\phi, t) = R\cos\phi\,\hat{y}(t) + R\sin\phi\,\hat{z}(t)$$
-The point to be traced on the sphere of radius $R$ is the $+z$ pole ($\phi = \frac{\pi}{2}$):
-$$\mathbf{P}(t) = R\,\hat{z}(t)$$
+The point to be traced on the sphere of radius $R$ is:
+$$\mathbf{P}(t) = -R\cos\alpha\,\hat{\mathbf{x}}(t) + R\sin\alpha\,\hat{\mathbf{z}}(t)$$
 2. Primed circle (lies in the primed $y'z'$-plane, normal $\hat{x}'(t)$):
 $$\mathbf{r}'(\phi', t) = R\cos\phi'\,\hat{y}'(t) + R\sin\phi'\,\hat{z}'(t)$$
 3. The $z = 0$ Dynamic Plane and Line of Intersection:
@@ -48,12 +48,19 @@ This traces a closed, 4-lobed spherical curve (periodic with period $T = \frac{8
 Case B: Reversed Hierarchy (Unprimed rotation carries the $z=0$ intersection axis $\hat{y}(t)$)
 If instead the unprimed rotation at rate $\omega$ about $\hat{x}'$ carries the intersection vector $\hat{y}(t)$ around $\hat{x}'$, and the $\frac{\omega}{4}$ rotation acts about that moving intersection vector $\hat{y}(t)$:
 $$R(t) = R_y(-\alpha)\, R_x(\omega t)\, R_y\!\left(\frac{\omega}{4}t + \alpha\right)$$
-Applying this to $\mathbf{P}(t) = R\,R(t)\hat{E}_z$ with $\alpha = \frac{\pi}{4}$ gives:
+Applying this to $\mathbf{P}(t) = -R\cos\alpha\,\hat{\mathbf{x}}(t) + R\sin\alpha\,\hat{\mathbf{z}}(t) = R\,R(t)\begin{bmatrix}-\cos\alpha \\ 0 \\ \sin\alpha\end{bmatrix}$:
+Since $R_y\!\left(\frac{\omega}{4}t + \alpha\right)\begin{bmatrix}-\cos\alpha \\ 0 \\ \sin\alpha\end{bmatrix} = \begin{bmatrix}-\cos\!\left(\frac{\omega}{4}t + 2\alpha\right) \\ 0 \\ \sin\!\left(\frac{\omega}{4}t + 2\alpha\right)\end{bmatrix}$, we obtain for general $\alpha$:
+$$\mathbf{P}(t) = R\begin{bmatrix}
+-\cos\alpha\cos\!\left(\frac{\omega}{4}t + 2\alpha\right) - \sin\alpha\cos(\omega t)\sin\!\left(\frac{\omega}{4}t + 2\alpha\right) \\[6pt]
+-\sin(\omega t)\sin\!\left(\frac{\omega}{4}t + 2\alpha\right) \\[6pt]
+-\sin\alpha\cos\!\left(\frac{\omega}{4}t + 2\alpha\right) + \cos\alpha\cos(\omega t)\sin\!\left(\frac{\omega}{4}t + 2\alpha\right)
+\end{bmatrix}$$
+For $\alpha = \frac{\pi}{4}$ ($2\alpha = \frac{\pi}{2}$, so $\cos(\frac{\omega}{4}t + \frac{\pi}{2}) = -\sin(\frac{\omega}{4}t)$ and $\sin(\frac{\omega}{4}t + \frac{\pi}{2}) = \cos(\frac{\omega}{4}t)$), the $\frac{\pi}{4}$ phase shift cancels cleanly:
 $$\boxed{
 \begin{aligned}
-X(t) &= \frac{\sqrt{2}}{2}R\left[\sin\!\left(\frac{\omega}{4}t + \frac{\pi}{4}\right) - \cos\!\left(\frac{\omega}{4}t + \frac{\pi}{4}\right)\cos(\omega t)\right] \\
-Y(t) &= -\sin(\omega t)\cos\!\left(\frac{\omega}{4}t + \frac{\pi}{4}\right) R \\
-Z(t) &= \frac{\sqrt{2}}{2}R\left[\sin\!\left(\frac{\omega}{4}t + \frac{\pi}{4}\right) + \cos\!\left(\frac{\omega}{4}t + \frac{\pi}{4}\right)\cos(\omega t)\right]
+X(t) &= \frac{\sqrt{2}}{2}R\left[\sin\!\left(\frac{\omega}{4}t\right) - \cos\!\left(\frac{\omega}{4}t\right)\cos(\omega t)\right] \\
+Y(t) &= -R\sin(\omega t)\cos\!\left(\frac{\omega}{4}t\right) \\
+Z(t) &= \frac{\sqrt{2}}{2}R\left[\sin\!\left(\frac{\omega}{4}t\right) + \cos\!\left(\frac{\omega}{4}t\right)\cos(\omega t)\right]
 \end{aligned}
 }$$
 Note on Mutual Body-Locked Instantaneous Addition ($\boldsymbol{\Omega} = \omega\hat{x}'(t) + \frac{\omega}{4}\hat{y}(t)$)

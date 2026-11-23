@@ -1,0 +1,1 @@
+evaluate and change the trace from $\mathbf{P}(t) = R\,\hat{z}(t)$ to $\mathbf{P}(t) = -R\,\cos(\alpha)\,\hat{\mathbf{x}}(t) + R\,\sin(\alpha)\,\hat{\mathbf{z}}(t)$

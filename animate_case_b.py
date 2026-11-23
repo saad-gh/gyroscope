@@ -33,15 +33,21 @@ def case_b_rotation_matrix(t: float, omega: float = 1.0, alpha: float = np.pi / 
 
 def case_b_trace_explicit(t: np.ndarray, R: float = 1.0, omega: float = 1.0, alpha: float = np.pi / 4) -> np.ndarray:
     """
-    Closed-form trajectory of the unprimed +z pole P(t) = R * z_hat(t) for Case B:
-        X(t) = (sqrt(2)/2) R [ sin(omega*t/4 + pi/4) - cos(omega*t/4 + pi/4) cos(omega*t) ]
-        Y(t) = -R sin(omega*t) cos(omega*t/4 + pi/4)
-        Z(t) = (sqrt(2)/2) R [ sin(omega*t/4 + pi/4) + cos(omega*t/4 + pi/4) cos(omega*t) ]
+    Closed-form trajectory of P(t) = -R * cos(alpha) * x_hat(t) + R * sin(alpha) * z_hat(t) for Case B:
+      General alpha:
+        u2 = (omega / 4) * t + 2 * alpha
+        X(t) = R * [ -cos(alpha) * cos(u2) - sin(alpha) * cos(omega*t) * sin(u2) ]
+        Y(t) = -R * sin(omega*t) * sin(u2)
+        Z(t) = R * [ -sin(alpha) * cos(u2) + cos(alpha) * cos(omega*t) * sin(u2) ]
+      For alpha = pi/4 (2*alpha = pi/2):
+        X(t) = (sqrt(2)/2) R [ sin(omega*t/4) - cos(omega*t/4) cos(omega*t) ]
+        Y(t) = -R sin(omega*t) cos(omega*t/4)
+        Z(t) = (sqrt(2)/2) R [ sin(omega*t/4) + cos(omega*t/4) cos(omega*t) ]
     """
-    u = 0.25 * omega * t + alpha
-    X = R * (np.cos(alpha) * np.sin(u) - np.sin(alpha) * np.cos(u) * np.cos(omega * t))
-    Y = -R * np.sin(omega * t) * np.cos(u)
-    Z = R * (np.sin(alpha) * np.sin(u) + np.cos(alpha) * np.cos(u) * np.cos(omega * t))
+    u2 = 0.25 * omega * t + 2.0 * alpha
+    X = R * (-np.cos(alpha) * np.cos(u2) - np.sin(alpha) * np.cos(omega * t) * np.sin(u2))
+    Y = -R * np.sin(omega * t) * np.sin(u2)
+    Z = R * (-np.sin(alpha) * np.cos(u2) + np.cos(alpha) * np.cos(omega * t) * np.sin(u2))
     return np.vstack([X, Y, Z])
 
 
@@ -51,7 +57,7 @@ def generate_overview_figure(R: float = 1.0, omega: float = 1.0, alpha: float = 
     P = case_b_trace_explicit(t_dense, R=R, omega=omega, alpha=alpha)
 
     fig = plt.figure(figsize=(14, 10), dpi=140)
-    fig.suptitle("Case B: Spherical Trace of Unprimed +z Pole $P(t) = R\\,\\hat{z}(t)$\n"
+    fig.suptitle("Case B: Spherical Trace of $P(t) = -R\\,\\cos\\alpha\\,\\hat{x}(t) + R\\,\\sin\\alpha\\,\\hat{z}(t)$\n"
                  "$R(t) = R_y(-\\alpha)\\,R_x(\\omega t)\\,R_y(\\frac{\\omega}{4}t + \\alpha),\\ \\alpha = 45^\\circ$",
                  fontsize=13, fontweight="bold")
 
@@ -66,7 +72,7 @@ def generate_overview_figure(R: float = 1.0, omega: float = 1.0, alpha: float = 
     ax3d.plot_wireframe(xs, ys, zs, color="slategray", alpha=0.15, linewidth=0.4, rstride=2, cstride=4)
 
     ax3d.plot(P[0], P[1], P[2], color="#d9480f", linewidth=2.0, label="Full Trace $P(t)$")
-    ax3d.scatter([P[0, 0]], [P[1, 0]], [P[2, 0]], color="limegreen", s=50, zorder=5, label="$P(0) = (0,0,R)$")
+    ax3d.scatter([P[0, 0]], [P[1, 0]], [P[2, 0]], color="limegreen", s=50, zorder=5, label="$P(0)$")
 
     ax3d.set_xlim([-1.2 * R, 1.2 * R])
     ax3d.set_ylim([-1.2 * R, 1.2 * R])
@@ -169,8 +175,8 @@ def create_animation(
     normal_unprimed_line, = ax.plot([], [], [], color="#1c7ed6", linewidth=1.6, alpha=0.85, label="Unprimed Normal $\\hat{x}(t)$")
     normal_primed_line, = ax.plot([], [], [], color="#2b8a3e", linewidth=1.6, alpha=0.85, label="Primed Normal $\\hat{x}'(t)$")
 
-    trace_line, = ax.plot([], [], [], color="#d9480f", linewidth=2.6, label="Trace of $+z$ Pole $P(t)$")
-    pole_pt, = ax.plot([], [], [], "o", color="#e03131", markersize=8, label="Unprimed $+z$ Pole $P(t)$")
+    trace_line, = ax.plot([], [], [], color="#d9480f", linewidth=2.6, label="Trace of $P(t)$")
+    pole_pt, = ax.plot([], [], [], "o", color="#e03131", markersize=8, label="$P(t) = -R\\cos\\alpha\\,\\hat{x}+R\\sin\\alpha\\,\\hat{z}$")
     pole_vec, = ax.plot([], [], [], color="#e03131", linewidth=1.8)
 
     title_text = ax.set_title("", fontsize=11, fontweight="bold", pad=12)
@@ -231,8 +237,8 @@ def create_animation(
         normal_primed_line.set_data(n_p[0], n_p[1])
         normal_primed_line.set_3d_properties(n_p[2])
 
-        # 6. Pole P(t) = R * z_hat and trace up to current time t
-        P_now = R * z_hat
+        # 6. Point P(t) = -R * cos(alpha) * x_hat + R * sin(alpha) * z_hat and trace up to current time t
+        P_now = R * (-np.cos(alpha) * x_hat + np.sin(alpha) * z_hat)
         pole_pt.set_data([P_now[0]], [P_now[1]])
         pole_pt.set_3d_properties([P_now[2]])
 
@@ -247,7 +253,7 @@ def create_animation(
 
         angle_deg = np.degrees(np.arccos(np.clip(np.dot(x_hat, xp_hat), -1.0, 1.0)))
         title_text.set_text(
-            f"Case B Spherical Trace of Unprimed +z Pole  |  t/T = {t/T:.2f}  |  "
+            f"Case B Spherical Trace of P(t)  |  t/T = {t/T:.2f}  |  "
             f"Inter-plane Angle = {angle_deg:.1f}°"
         )
         return (
@@ -290,11 +296,13 @@ if __name__ == "__main__":
     if not args.show:
         matplotlib.use("Agg")
 
-    # Verify numerical consistency between matrix product R(t)e_z and explicit equations
+    # Verify numerical consistency between matrix product R(t)p_0 and explicit equations
+    alpha_default = np.pi / 4
+    p0_body = np.array([-np.cos(alpha_default), 0.0, np.sin(alpha_default)])
     t_test = np.linspace(0, 8 * np.pi / args.omega, 50)
     for ti in t_test:
-        p_mat = args.R * (case_b_rotation_matrix(ti, omega=args.omega) @ np.array([0.0, 0.0, 1.0]))
-        p_exp = case_b_trace_explicit(ti, R=args.R, omega=args.omega).ravel()
+        p_mat = args.R * (case_b_rotation_matrix(ti, omega=args.omega, alpha=alpha_default) @ p0_body)
+        p_exp = case_b_trace_explicit(ti, R=args.R, omega=args.omega, alpha=alpha_default).ravel()
         assert np.allclose(p_mat, p_exp, atol=1e-12), f"Mismatch at t={ti}: {p_mat} vs {p_exp}"
 
     generate_overview_figure(R=args.R, omega=args.omega, out_path=args.overview)

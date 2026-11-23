@@ -172,7 +172,7 @@
       <label class="legend-item">
         <input type="checkbox" id="showTrace" checked />
         <span class="swatch" style="background:#f97316"></span>
-        <span>+z Pole Trace P(t) = R ẑ(t)</span>
+        <span>Trace P(t) = -R cosα x̂ + R sinα ẑ</span>
       </label>
       <label class="legend-item">
         <input type="checkbox" id="showUnprimed" checked />
@@ -198,11 +198,12 @@
 
     <div class="math-box">
       <strong>Case B Equations:</strong><br/>
+      P(t) = -R cosα x̂(t) + R sinα ẑ(t)<br/>
       R(t) = R_y(-α) R_x(ωt) R_y(ωt/4 + α)<br/>
-      u = ωt/4 + α<br/>
-      X = R [cosα sin(u) - sinα cos(u) cos(ωt)]<br/>
-      Y = -R sin(ωt) cos(u)<br/>
-      Z = R [sinα sin(u) + cosα cos(u) cos(ωt)]
+      For α = 45°:<br/>
+      X = (√2/2)R [sin(ωt/4) - cos(ωt/4)cos(ωt)]<br/>
+      Y = -R sin(ωt) cos(ωt/4)<br/>
+      Z = (√2/2)R [sin(ωt/4) + cos(ωt/4)cos(ωt)]
     </div>
   </aside>
 
@@ -277,6 +278,15 @@
     }
     function colVec(M, j) {
       return [M[0][j], M[1][j], M[2][j]];
+    }
+    function pointP(M, alpha) {
+      const ca = Math.cos(alpha), sa = Math.sin(alpha);
+      const xh = colVec(M, 0), zh = colVec(M, 2);
+      return [
+        -ca * xh[0] + sa * zh[0],
+        -ca * xh[1] + sa * zh[1],
+        -ca * xh[2] + sa * zh[2]
+      ];
     }
     function project(pt) {
       const ca = Math.cos(camAzim), sa = Math.sin(camAzim);
@@ -419,7 +429,7 @@
         for (let i = 0; i <= N; i++) {
           const ti = (i / N) * T;
           const M = caseBMatrix(ti, omega, alpha);
-          fullPts.push(colVec(M, 2));
+          fullPts.push(pointP(M, alpha));
         }
         drawPolyline3D(fullPts, 'rgba(249, 115, 22, 0.24)', 1.5, [3, 3]);
 
@@ -428,7 +438,7 @@
         for (let i = 0; i <= steps; i++) {
           const ti = (i / N) * T;
           const M = caseBMatrix(ti, omega, alpha);
-          histPts.push(colVec(M, 2));
+          histPts.push(pointP(M, alpha));
         }
         drawPolyline3D(histPts, '#f97316', 3.0);
       }
@@ -457,15 +467,16 @@
         drawPoint3D(p2, '#facc15', 5);
       }
 
-      // Draw +z pole vector & point
-      drawPolyline3D([[0,0,0], zHat], '#ef4444', 2.4);
-      drawPoint3D(zHat, '#ef4444', 7);
+      // Draw P(t) vector & point
+      const pNow = pointP(Rmat, alpha);
+      drawPolyline3D([[0,0,0], pNow], '#ef4444', 2.4);
+      drawPoint3D(pNow, '#ef4444', 7);
 
       // Update live stats
-      document.getElementById('xVal').textContent = zHat[0].toFixed(3);
-      document.getElementById('yVal').textContent = zHat[1].toFixed(3);
-      document.getElementById('zVal').textContent = zHat[2].toFixed(3);
-      const norm = Math.hypot(zHat[0], zHat[1], zHat[2]);
+      document.getElementById('xVal').textContent = pNow[0].toFixed(3);
+      document.getElementById('yVal').textContent = pNow[1].toFixed(3);
+      document.getElementById('zVal').textContent = pNow[2].toFixed(3);
+      const norm = Math.hypot(pNow[0], pNow[1], pNow[2]);
       document.getElementById('normVal').textContent = norm.toFixed(3);
       const dot = xHat[0]*xpHat[0] + xHat[1]*xpHat[1] + xHat[2]*xpHat[2];
       const ang = (Math.acos(Math.max(-1, Math.min(1, dot))) * 180) / Math.PI;
